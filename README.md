@@ -1,4 +1,3 @@
 # user-manager-api
 
-
-![Logo](https://img.favpng.com/16/6/22/user-computer-icons-logo-clip-art-png-favpng-wVurk7ctMguBduxcEZgRKcHn1.jpg)
+![logo](https://user-images.githubusercontent.com/72669865/236910815-72e6ef01-c9c8-4da6-ae87-cd6cf4373b51.png)
