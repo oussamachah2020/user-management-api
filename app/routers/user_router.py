@@ -1,51 +1,66 @@
+import json
 from fastapi import APIRouter, Response
+from utils.response_util import response_msg
 from config.settings import settings
 from models.user_model import registrationModel, loginModel
 from config.db import db
 import bcrypt
 import jwt
+from bson import ObjectId
 
 userRouter = APIRouter()
 
 
-@userRouter.post("/create")
+@userRouter.post("/register", status_code=201)
 async def create_user(user: registrationModel):
     existed_user = db.users.find_one({"email": user.email})
 
     if existed_user:
-        return Response(status_code=403, content="User already exists")
+        return Response(status_code=409, content=response_msg("msg", "user already exists"))
 
-    encoded_password = user.password.encode('utf-8')
-    salt = bcrypt.gensalt(10)
-    hashed_password = bcrypt.hashpw(encoded_password, salt)
-    user.password = hashed_password.decode('utf-8')
+    userDict = {
+        "_id": str(ObjectId()),
+        "username": user.username,
+        "email": user.email,
+        "password": user.password
+    }
 
-    newUser = db.users.insert_one(user.dict())
+    if isinstance(userDict["password"], str):
+        salt = bcrypt.gensalt(10)
+        hashed_password = bcrypt.hashpw(
+            userDict["password"].encode("utf-8"), salt)
+        userDict["password"] = hashed_password.decode("utf-8")
 
-    encoded_jwt = jwt.encode({newUser._id: "payload"},
-                             "secret", algorithm="HS256")
+    if userDict:
+        db.users.insert_one(userDict)
+        encoded_jwt = jwt.encode(
+            {userDict["_id"]: "payload"}, settings.JWT_PRIVATE_KEY, algorithm="HS256")
+        print(encoded_jwt)
+        return Response(status_code=201, content=response_msg("msg", "user created successfully"))
 
-    if newUser:
-        return Response(status_code=201, content=["user created successfully", {"token": encoded_jwt}])
-    else:
-        return Response(status_code=500)
 
-
-@userRouter.get("/all")
+@userRouter.post("/login", status_code=200)
 async def get_user(user: loginModel):
-    searched_user = db.users.find({"email": user.email})
-    # user = searched_user.
-    encoded_jwt = jwt.encode({user._id: "payload"},
-                             settings.JWT_PRIVATE_KEY, algorithm="HS256")
+    try:
+        auth_user = db.users.find_one({"email": user.email})
 
-    user_password_encoded = user.password.encode("utf-8")
-    passwords_matching = bcrypt.checkpw(
-        user_password_encoded, searched_user.password)
+        auth_user_dict = dict(auth_user)
 
-    if searched_user:
-        if passwords_matching:
-            return Response(status_code=200, content={"token": encoded_jwt})
+        if auth_user is None:
+            return Response(status_code=404, content=response_msg("msg", "user not found"))
         else:
-            return Response(status_code=400, content="Incorrect password")
-    else:
-        return Response(status_code=404, content="user not found")
+            encoded_password = user.password.encode("utf-8")
+            password_to_check = auth_user_dict['password']
+            if isinstance(password_to_check, str):
+                password_to_check = password_to_check.encode("utf-8")
+                password_matching = bcrypt.checkpw(
+                    encoded_password, password_to_check)
+                if password_matching:
+                    encoded_jwt = jwt.encode(
+                        {auth_user_dict["_id"]: "payload"}, settings.JWT_PRIVATE_KEY, algorithm="HS256")
+
+                    return Response(status_code=200, content=response_msg("token", encoded_jwt))
+                else:
+                    return Response(status_code=400, content=response_msg("msg", "incorrect password"))
+    except Exception as e:
+        return Response(status_code=500, content=response_msg("error", e))
