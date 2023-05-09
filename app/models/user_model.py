@@ -1,7 +1,8 @@
 from pydantic import BaseModel, EmailStr, Field
 import uuid
 
-class registrationModel(BaseModel):
+
+class userModel(BaseModel):
     id: str = Field(default_factory=uuid.uuid4, alias="_id")
     username: str = Field(...)
     email: EmailStr = Field(...)
@@ -23,6 +24,7 @@ def ResponseModel(data, message):
         "code": 200,
         "message": message
     }
+
 
 def ErrorResponse(error, code, message):
     return {"error": error, "code": code, "message": message}
