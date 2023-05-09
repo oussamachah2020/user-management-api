@@ -18,12 +18,9 @@ class userModel(BaseModel):
         }
 
 
-def ResponseModel(data, message):
-    return {
-        "data": [data],
-        "code": 200,
-        "message": message
-    }
+class responseModel(BaseModel):
+    access_token: str
+    refresh_token: str
 
 
 def ErrorResponse(error, code, message):
@@ -33,3 +30,7 @@ def ErrorResponse(error, code, message):
 class loginModel(BaseModel):
     email: str = Field(...)
     password: str = Field(...)
+
+
+class tokenModel(BaseModel):
+    token: str = Field(...)
