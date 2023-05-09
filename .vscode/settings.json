@@ -3,6 +3,6 @@
     "editor.defaultFormatter": "ms-python.autopep8"
   },
   "python.formatting.provider": "none",
-  "cSpell.words": ["fastapi"],
+  "cSpell.words": ["fastapi", "jsonable", "pymongo"],
   "python.analysis.typeCheckingMode": "off"
 }

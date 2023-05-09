@@ -1,15 +1,35 @@
-from pydantic import BaseModel
-from bson import objectid
+from pydantic import BaseModel, EmailStr, Field
+import uuid
 
 
-class registrationModel(BaseModel):
-    _id: objectid
-    username: str
-    email: str
-    password: str
+class userModel(BaseModel):
+    id: str = Field(default_factory=uuid.uuid4, alias="_id")
+    username: str = Field(...)
+    email: EmailStr = Field(...)
+    password: str = Field(...)
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "username": "example",
+                "email": "example@example.com",
+                "password": "password"
+            }
+        }
+
+
+def ResponseModel(data, message):
+    return {
+        "data": [data],
+        "code": 200,
+        "message": message
+    }
+
+
+def ErrorResponse(error, code, message):
+    return {"error": error, "code": code, "message": message}
 
 
 class loginModel(BaseModel):
-    _id: objectid
-    email: str
-    password: str
+    email: str = Field(...)
+    password: str = Field(...)
